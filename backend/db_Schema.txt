@@ -1,0 +1,257 @@
+-- Create Hospitals Table
+CREATE TABLE Hospitals (
+    hospital_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    location TEXT NOT NULL,
+    contact_number VARCHAR(15),
+    email VARCHAR(100) UNIQUE,
+    specializations_offered TEXT,
+    total_beds INT,
+    available_beds INT,
+    hospital_type ENUM('General', 'Specialty', 'Multispecialty') NOT NULL
+);
+
+-- Create Doctors Table
+CREATE TABLE Doctors (
+    doctor_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    specialization VARCHAR(50) NOT NULL,
+    qualification VARCHAR(100),
+    experience_years INT CHECK (experience_years >= 0),
+    contact_number VARCHAR(15),
+    email VARCHAR(100) UNIQUE,
+    hospital_id INT,
+    availability VARCHAR(50),
+    consultation_fee DECIMAL(10, 2),
+    rating DECIMAL(3, 2) CHECK (rating BETWEEN 0 AND 5),
+    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id)
+);
+
+
+CREATE TABLE Patients (
+    patient_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    age INT CHECK (age >= 0),
+    gender ENUM('Male', 'Female', 'Other') NOT NULL,
+    contact_number VARCHAR(15),
+    email VARCHAR(100) UNIQUE,
+    address TEXT,
+    medical_history TEXT,
+    current_medication TEXT,
+    doctor_id INT,
+    hospital_id INT,
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(doctor_id),
+    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id)
+);
+
+CREATE TABLE Appointments (
+    appointment_id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT,
+    hospital_id INT,
+    doctor_id INT,
+    receptionist_id INT,
+    appointment_date DATE,
+    appointment_time TIME,
+    status ENUM('Scheduled', 'Completed', 'Cancelled', 'Rescheduled') DEFAULT 'Scheduled',
+    notes TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (patient_id) REFERENCES patients(patient_id),
+    FOREIGN KEY (hospital_id) REFERENCES hospitals(hospital_id),
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id),
+    FOREIGN KEY (receptionist_id) REFERENCES receptionists(receptionist_id)
+);
+
+CREATE TABLE Prescriptions (
+    prescription_id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    prescribed_medicines TEXT NOT NULL,
+    dosage_instructions TEXT,
+    created_date DATE DEFAULT CURRENT_DATE,
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(doctor_id)
+);
+
+
+CREATE TABLE Feedback (
+    feedback_id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT NOT NULL,
+    doctor_id INT NOT NULL,
+    rating DECIMAL(3, 2) CHECK (rating BETWEEN 1 AND 5),
+    comments TEXT,
+    date_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(doctor_id)
+);
+
+
+CREATE TABLE Billing (
+    bill_id INT AUTO_INCREMENT PRIMARY KEY,
+    appointment_id INT NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_status ENUM('Paid', 'Pending') DEFAULT 'Pending',
+    payment_date DATE,
+    payment_mode ENUM('Cash', 'Card', 'Online'),
+    FOREIGN KEY (appointment_id) REFERENCES Appointments(appointment_id)
+);
+
+CREATE TABLE DoctorHospitals (
+    doctor_id INT,
+    hospital_id INT,
+    day_of_week VARCHAR(20),      -- Specific day
+    start_time TIME,               -- Precise start time
+    end_time TIME,                 -- Precise end time
+    PRIMARY KEY (doctor_id, hospital_id, day_of_week),
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(doctor_id),
+    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id)
+);
+
+-- Easy to find all hospitals for a doctor
+SELECT h.hospital_name, 
+       dh.day_of_week, 
+       TIME_FORMAT(dh.start_time, '%h:%i %p') AS start_time,
+       TIME_FORMAT(dh.end_time, '%h:%i %p') AS end_time
+FROM doctors d
+JOIN doctorHospitals dh ON d.doctor_id = dh.doctor_id
+JOIN hospitals h ON dh.hospital_id = h.hospital_id
+WHERE d.doctor_id = 1;
+
+-- Easy to find all doctors in a specific hospital (atually this is not the exact way)
+SELECT d.name, h.hospital_name
+FROM Doctors d
+JOIN DoctorHospitals dh ON d.doctor_id = dh.doctor_id
+JOIN Hospitals h ON dh.hospital_id = h.hospital_id
+WHERE h.hospital_id = 101;
+
+-- Prescription Table
+CREATE TABLE Prescriptions (
+    prescription_id INT AUTO_INCREMENT PRIMARY KEY,
+    patient_id INT,
+    doctor_id INT,
+    hospital_id INT,
+    prescription_date DATE NOT NULL,
+    
+    -- Patient Specific Details
+    patient_name VARCHAR(100),
+    patient_age INT,
+    patient_gender ENUM('Male', 'Female', 'Other'),
+    patient_contact VARCHAR(15),
+    
+    -- Medical Examination Details
+    bp_reading VARCHAR(20),
+    pulse_rate INT,
+    weight DECIMAL(5,2),
+    spo2 DECIMAL(5,2),
+    
+    -- Clinical Details
+    diagnosis TEXT,
+    system_examination TEXT,
+    patient_complaints TEXT,
+    
+    -- Doctor Details
+    referring_doctor VARCHAR(100),
+    prescribing_doctor_name VARCHAR(100),
+    doctor_qualifications TEXT,
+    doctor_registration_number VARCHAR(50),
+    
+    -- Additional Medical Notes
+    notes TEXT,
+    follow_up_date DATE,
+    
+    FOREIGN KEY (patient_id) REFERENCES Patients(patient_id),
+    FOREIGN KEY (doctor_id) REFERENCES Doctors(doctor_id),
+    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id)
+);
+
+-- Medication Details Table (Separate Table for Medications)
+CREATE TABLE Prescription_Medications (
+    prescription_medication_id INT AUTO_INCREMENT PRIMARY KEY,
+    prescription_id INT,
+    medicine_name VARCHAR(100),
+    composition TEXT,
+    dosage VARCHAR(100),
+    timing VARCHAR(100),
+    
+    FOREIGN KEY (prescription_id) REFERENCES Prescriptions(prescription_id)
+);
+
+-- Advice Table
+CREATE TABLE Prescription_Advice (
+    prescription_advice_id INT AUTO_INCREMENT PRIMARY KEY,
+    prescription_id INT,
+    advice_details TEXT,
+    
+    FOREIGN KEY (prescription_id) REFERENCES Prescriptions(prescription_id)
+);
+
+-- Insert Prescription
+INSERT INTO Prescriptions 
+(patient_id, doctor_id, hospital_id, prescription_date, 
+ patient_name, patient_age, patient_gender, patient_contact,
+ bp_reading, pulse_rate, weight, spo2,
+ diagnosis, system_examination, patient_complaints,
+ referring_doctor, prescribing_doctor_name, doctor_qualifications, 
+ doctor_registration_number, notes, follow_up_date)
+VALUES 
+(/* patient details from the document */);
+
+-- Insert Medications
+INSERT INTO Prescription_Medications 
+(prescription_id, medicine_name, composition, dosage, timing)
+VALUES 
+(LAST_INSERT_ID(), 'NAPRAD 500MG TABLET', 'DOMPERIDONE 10 MG + NAPROXEN 500 MG', '1-HR qIG, 1-Id', ''),
+(LAST_INSERT_ID(), 'TAYOTOTAL TABLET', 'AMITRIPTYLINE 25 MG', '1-R GIG', ''),
+(LAST_INSERT_ID(), 'AMITONE 25MG TABLET', 'ALCIUM CARBONATE 1250MG + VITAMIN D3 2000IU + METHYLCOBALAMIN1500MCG', '1-Id-a qI', '');
+
+-- Insert Advice
+INSERT INTO Prescription_Advice
+(prescription_id, advice_details)
+VALUES 
+(LAST_INSERT_ID(), 'WALKING AT NORMAL PACE X 30 MINS PER DAY');
+
+CREATE TABLE receptionists (
+    receptionist_id INT AUTO_INCREMENT PRIMARY KEY,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    contact_number VARCHAR(15) NOT NULL,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    hospital_id INT,
+    doctor_id INT,
+    shift_timing VARCHAR(50),
+    
+    FOREIGN KEY (hospital_id) REFERENCES hospitals(hospital_id),
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id)
+);
+
+CREATE TABLE Users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    role ENUM('doctor', 'receptionist', 'patient', 'hospital') NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    last_login TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Optional additional fields for user management
+    reset_token VARCHAR(100) NULL,
+    reset_token_expiry TIMESTAMP NULL
+);
+
+CREATE TABLE doctor_slot (
+    appointment_id INT PRIMARY KEY AUTO_INCREMENT,
+    doctor_id INT NOT NULL,
+    hospital_id INT NOT NULL,
+    appointment_date DATE NOT NULL,
+    appointment_time TIME NOT NULL,
+    FOREIGN KEY (doctor_id) REFERENCES doctors(doctor_id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE,
+    FOREIGN KEY (hospital_id) REFERENCES hospitals(hospital_id)
+        ON DELETE RESTRICT
+        ON UPDATE CASCADE
+);
