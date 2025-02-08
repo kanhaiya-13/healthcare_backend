@@ -4,18 +4,23 @@ const jwt = require("jsonwebtoken"); // Ensure this line is present
 const connection = require("../db"); // Import the database connection
 const mysql = require("mysql2/promise"); // Use mysql2 for async/await support
 const verifyToken = require("./verifyToken"); // Import the verifyToken middleware
-require('dotenv').config();
+require("dotenv").config();
 
 router.get("/patients", verifyToken, async (req, res) => {
   console.log(req.user);
+  const doctor_id = req.session.user.doctor_id;
   try {
     // Query for total patients
-    const [totalPatientsResult] = await connection.promise().query(`
+    const [totalPatientsResult] = await connection.promise().query(
+      `
         SELECT COUNT(DISTINCT patient_id) AS total_patients_visited
         FROM Appointments
         WHERE MONTH(appointment_date) = MONTH(CURRENT_DATE - INTERVAL 1 MONTH)
-          AND YEAR(appointment_date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH);
-    `);
+          AND YEAR(appointment_date) = YEAR(CURRENT_DATE - INTERVAL 1 MONTH)
+          AND doctor_id = ?;
+    `,
+      [doctor_id]
+    );
     const totalPatients = totalPatientsResult[0]?.total_patients_visited || 0;
 
     // Query for new patients
@@ -59,7 +64,6 @@ router.get("/patients", verifyToken, async (req, res) => {
   }
 });
 
-
 router.get("/diagnosis", verifyToken, async (req, res) => {
   const { doctor_id } = req.query;
 
@@ -87,7 +91,11 @@ router.get("/diagnosis", verifyToken, async (req, res) => {
     console.log(results);
   } catch (err) {
     console.error(err);
-    res.status(500).send("Error fetching diagnosis statistics for the given doctor last month");
+    res
+      .status(500)
+      .send(
+        "Error fetching diagnosis statistics for the given doctor last month"
+      );
   }
 });
 

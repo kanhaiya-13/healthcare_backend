@@ -1,4 +1,8 @@
 const express = require("express");
+const session = require("express-session");
+const MySQLStore = require("express-mysql-session")(session);
+const mysql = require("mysql2");
+const connection = require("./db");
 const doctorsRoutes = require("./routes/doctors"); // Doctors CRUD routes
 const hospitalsRoutes = require("./routes/hospitals");
 const patientRoutes = require("./routes/patients");
@@ -15,12 +19,30 @@ const actionPlanner = require("./routes/actionPlanner");
 // const clinic = require("./routes/clinic");
 const cookieParser = require("cookie-parser");
 const doctorSchedule = require("./routes/doctor_slot");
-const clinicStats = require("./routes/stats")
+const clinicStats = require("./routes/stats");
 
 const app = express();
+app.use(
+  cors({
+    origin: "http://localhost:5500", // Frontend origin
+    credentials: true, // Enable cookies and sessions
+  })
+);
 app.use(express.json()); // Parse JSON bodies
-app.use(cors());
 app.use(cookieParser());
+
+const sessionStore = new MySQLStore({}, connection);
+
+app.use(
+  session({
+    key: "session_id",
+    secret: "kanhaiyaaa",
+    store: sessionStore,
+    resave: false,
+    saveUninitialized: false,
+    cookie: { Secure: false, httpOnly: true, sameSite: "Lax" },
+  })
+);
 
 // Use individual routes
 app.use("/users", usersRoutes);

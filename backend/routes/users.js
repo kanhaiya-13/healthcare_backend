@@ -5,11 +5,11 @@ const connection = require("../db"); // Import the database connection
 const bcrypt = require("bcrypt"); // For hashing the password
 const mysql = require("mysql2/promise"); // Use mysql2 for async/await support
 const verifyToken = require("./verifyToken"); // Import the verifyToken middleware
-require('dotenv').config();
+require("dotenv").config();
 
 const JWT_SECRET = process.env.JWT_SECRET; // Secret key for JWT
 
-const JWT_EXPIRY = "1h"; // Token expiration time
+const JWT_EXPIRY = "30m"; // Token expiration time
 
 // GET all users
 router.get("/", (req, res) => {
@@ -111,15 +111,15 @@ router.post("/logout", verifyToken, (req, res) => {
 //   }
 // });
 
-
-
 // CREATE a new user
 router.post("/create", async (req, res) => {
   const { email, password, role } = req.body;
 
   // Check if email, password, and role are provided
   if (!email || !password || !role) {
-    return res.status(400).json({ message: "Email, password, and role are required" });
+    return res
+      .status(400)
+      .json({ message: "Email, password, and role are required" });
   }
 
   try {
@@ -167,7 +167,6 @@ router.post("/create", async (req, res) => {
             roleQuery = `INSERT INTO doctors (user_id, email) VALUES (?, ?)`;
           } else if (role === "patient") {
             roleQuery = `INSERT INTO patients (user_id, email) VALUES (?, ?)`;
-            
           } else if (role === "receptionist") {
             roleQuery = `INSERT INTO receptionists (user_id, email) VALUES (?, ?)`;
           } else {
@@ -182,8 +181,6 @@ router.post("/create", async (req, res) => {
               console.error("Error in role INSERT query:", roleErr.message);
               return res.status(500).json({ error: roleErr.message });
             }
-
-            
 
             // Success response
             res.status(201).json({
@@ -201,8 +198,6 @@ router.post("/create", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
-
 
 // UPDATE an existing user
 router.put("/update", (req, res) => {
@@ -250,13 +245,15 @@ router.post("/login", async (req, res) => {
   const { email, password } = req.body;
 
   connection.query(
-    "SELECT * FROM Users WHERE email = ?", [email], async (err, results) => {
+    "SELECT * FROM Users WHERE email = ?",
+    [email],
+    async (err, results) => {
       if (err) {
         return res.status(500).json({ error: err.message });
       }
 
       const user = results[0];
-      
+
       if (!user) {
         return res.status(400).json({ message: "Invalid credentials" });
       }
@@ -268,47 +265,75 @@ router.post("/login", async (req, res) => {
         return res.status(400).json({ message: "Invalid credentials" });
       }
 
-      // Generate JWT
-      const token = jwt.sign(
-      {
-        user_id: user.user_id, // Use the primary key from your database
-        role: user.role, // Include user role in the token
-        email: user.email,
-      },
-      JWT_SECRET,
-      { expiresIn: JWT_EXPIRY }
-    );
+      // session creation for doctors
+      console.log(user.role);
+      if (user.role == "doctor") {
+        connection.query(
+          "SELECT * FROM doctors where user_id=?",
+          [user.user_id],
+          (err, results1) => {
+            if (err) {
+              console.log("err in fetching doctor info");
+            }
+            const doctor = results1[0];
+            // console.log(doctor);
+            // creating session storing doctor data
+            req.session.user = {
+              id: user.user_id,
+              role: user.role,
+              doctor_id: doctor.doctor_id,
+              hospital_id: doctor.hospital_id,
+              name: doctor.name,
+              specialization: doctor.specialization,
+              qualification: doctor.qualification,
+              email: doctor.email,
+              hospital_id: doctor.hospital_id,
+            };
 
-      // Update last login
-      connection.query(
-        "UPDATE Users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?",
-        [user.user_id],
+            // Generate JWT
+            const token = jwt.sign(
+              {
+                user_id: user.user_id, // Use the primary key from your database
+                role: user.role, // Include user role in the token
+                email: user.email,
+              },
+              JWT_SECRET,
+              { expiresIn: JWT_EXPIRY }
+            );
 
-        (updateErr) => {
-          if (updateErr) {
-            console.error("Failed to update last login:", updateErr);
+            // Update last login
+            connection.query(
+              "UPDATE Users SET last_login = CURRENT_TIMESTAMP WHERE user_id = ?",
+              [user.user_id],
+
+              (updateErr) => {
+                if (updateErr) {
+                  console.error("Failed to update last login:", updateErr);
+                }
+              }
+            );
+
+            // Determine the redirect URL based on user role
+            let redirectUrl = "";
+            if (user.role === "doctor") {
+              redirectUrl = "/frontend/html/doctor/dashBoard.html"; // Doctor dashboard
+            } else if (user.role === "patient") {
+              redirectUrl = "/html/patient/dashBoard.html"; // Patient dashboard
+            } else {
+              return res.status(403).json({ message: "Unauthorized Role" });
+            }
+
+            res.status(200).json({
+              message: "Login successful",
+              user_id: user.user_id,
+              email: user.email,
+              token: token,
+              role: user.role,
+              redirectUrl: redirectUrl,
+            });
           }
-        }
-      );
-
-      // Determine the redirect URL based on user role
-      let redirectUrl = "";
-      if (user.role === "doctor") {
-        redirectUrl = "/html/doctor/dashBoard.html"; // Doctor dashboard
-      } else if (user.role === "patient") {
-        redirectUrl = "/html/patient/dashBoard.html"; // Patient dashboard
-      } else {
-        return res.status(403).json({ message: "Unauthorized Role" });
+        );
       }
-      
-      res.status(200).json({
-        message: "Login successful",
-        user_id: user.user_id,
-        email: user.email,
-        token: token,
-        role: user.role,
-        redirectUrl: redirectUrl,
-      });
     }
   );
 });
@@ -317,9 +342,7 @@ router.post("/login", async (req, res) => {
 // router.get("/redirect", verifyToken, (req, res) => {
 //   const { role } = req.user; // Extract role from the decoded JWT token
 
-  
-//   console.log("Decoded user role:", role); 
-
+//   console.log("Decoded user role:", role);
 
 //   let redirectUrl = "";
 //   if (role === "doctor") {

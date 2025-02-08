@@ -2,6 +2,23 @@ const express = require("express");
 const router = express.Router();
 const connection = require("../db");
 const mysql = require("mysql2/promise");
+const app = express();
+const cors = require("cors");
+
+app.use(
+  cors({
+    origin: "http://127.0.0.1:5500", // Replace with your frontend URL
+    credentials: true, // Allow cookies to be sent
+  })
+);
+
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "http://127.0.0.1:5500");
+  res.header("Access-Control-Allow-Credentials", "true");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  next();
+});
 
 // CREATE - Add a new appointment
 router.post("/create", async (req, res) => {
@@ -65,19 +82,21 @@ router.get("/", async (req, res) => {
     //         WHERE 1=1
     //     `);
     // res.json(appointments);
-    const query = `SELECT a.*,
-                    p.name as patient_name,
-                    d.name as doctor_name
-             FROM Appointments a
-             JOIN patients p ON a.patient_id = p.patient_id
-             JOIN doctors d ON a.doctor_id = d.doctor_id
-             WHERE 1=1`;
-    connection.query(query, (error, result) => {
+    const query = `SELECT a.*, 
+       p.name AS patient_name, 
+       d.name AS doctor_name
+FROM Appointments a
+JOIN patients p ON a.patient_id = p.patient_id
+JOIN doctors d ON a.doctor_id = d.doctor_id
+WHERE a.doctor_id = ?`;
+    console.log(req.session.user.doctor_id);
+    connection.query(query, [req.session.user.doctor_id], (error, result) => {
       if (error) {
         res.json(error);
       } else {
         res.json(result);
       }
+      console.log(result);
     });
   } catch (error) {
     console.error("Error fetching appointments:", error);
