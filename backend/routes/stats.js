@@ -7,7 +7,6 @@ const verifyToken = require("./verifyToken"); // Import the verifyToken middlewa
 require("dotenv").config();
 
 router.get("/patients", verifyToken, async (req, res) => {
-  console.log(req.user);
   const doctor_id = req.session.user.doctor_id;
   try {
     // Query for total patients

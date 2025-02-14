@@ -1,11 +1,12 @@
 const jwt = require("jsonwebtoken");
 require("dotenv").config(); // Load .env file
-const JWT_SECRET = process.env.JWT_SECRET;  // Get the secret key from .env file
+const JWT_SECRET = process.env.JWT_SECRET; // Get the secret key from .env file
 
 // Middleware to verify JWT token
 const verifyToken = (req, res, next) => {
-  console.log("Middleware executed");  
-  const token = req.cookies.token || req.headers["authorization"]?.split(" ")[1]; // Getting token from cookies or Authorization header
+  console.log("Middleware executed");
+  const token =
+    req.cookies.token || req.headers["authorization"]?.split(" ")[1]; // Getting token from cookies or Authorization header
 
   if (!token) {
     return res.status(401).json({ message: "No token provided" });
@@ -18,6 +19,7 @@ const verifyToken = (req, res, next) => {
     req.user = decoded; // Attach user data to the request object
     next();
   } catch (err) {
+    console.log("Invalid or expired token");
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };

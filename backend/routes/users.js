@@ -73,43 +73,26 @@ router.get("/verify", verifyToken, (req, res) => {
     }
   );
 });
-
+// User Logout
 router.post("/logout", verifyToken, (req, res) => {
   const token = req.headers.authorization?.split(" ")[1]; // Extract the token from the Authorization header
 
   if (!token) {
     return res.status(400).json({ message: "No token provided" });
   }
+  // Destroy session
+  req.session.destroy((err) => {
+    if (err) {
+      console.error("Error destroying session:", err);
+      return res.status(500).json({ message: "Logout failed" });
+    }
+    // Optionally, you can manually clear the session cookie if required
+    res.clearCookie("connect.sid", { path: "/" });
 
-  // Logic to invalidate the token (e.g., adding it to a blacklist)
-  // This depends on your token implementation. For example:
-  // tokenBlacklist.add(token);
-
-  res.status(200).json({ message: "Logged out successfully" });
+    // Inform the client to remove the JWT token (handled client-side)
+    res.status(200).json({ message: "Logout successful" });
+  });
 });
-
-// router.get("/verify", (req, res) => {
-//   const authHeader = req.headers.authorization;
-
-//   if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//     return res.status(401).json({ isLoggedIn: false, message: "No token provided" });
-//   }
-
-//   const token = authHeader.split(" ")[1];
-
-//   try {
-//     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-//     res.status(200).json({
-//       isLoggedIn: true,
-//       user_id: decoded.user_id, // Assuming token contains the user's name
-//       email: decoded.email,
-//       role: decoded.role,
-//       profilePicture: decoded.profilePicture || null,
-//     });
-//   } catch (err) {
-//     res.status(401).json({ isLoggedIn: false, message: "Invalid or expired token" });
-//   }
-// });
 
 // CREATE a new user
 router.post("/create", async (req, res) => {
