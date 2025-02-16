@@ -34,34 +34,24 @@ router.get("/get", (req, res) => {
 
 // CREATE a new patient
 router.post("/create", (req, res) => {
-  const {
-    name,
-    age,
-    gender,
-    contact_number,
-    email,
-    address,
-    medical_history,
-    current_medication,
-    doctor_id,
-    hospital_id,
-  } = req.body;
+  console.log(req.body);
+  const { name, dob, gender, contact_number, email, address } = req.body;
 
   const query = `
-    INSERT INTO Patients (name, age, gender, contact_number, email, address, medical_history, current_medication, doctor_id, hospital_id)
+    INSERT INTO Patients (name,DOB, gender, contact_number, email, address, medical_history, current_medication, doctor_id, hospital_id)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `;
   const values = [
     name,
-    age,
+    dob,
     gender,
     contact_number,
     email,
     address,
-    medical_history,
-    current_medication,
-    doctor_id || null,
-    hospital_id || null,
+    "hypertension",
+    "migraine",
+    1,
+    1,
   ];
 
   connection.query(query, values, (err, results) => {
