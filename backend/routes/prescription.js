@@ -50,7 +50,7 @@ router.post("/", (req, res) => {
     diagnosis,
     system_examination,
     patient_complaints,
-    referring_doctor,  // Added field
+    referring_doctor, // Added field
     prescribing_doctor_name,
     doctor_qualifications,
     doctor_registration_number,
@@ -65,15 +65,31 @@ router.post("/", (req, res) => {
       weight, spo2, diagnosis, system_examination, patient_complaints, 
       referring_doctor, prescribing_doctor_name, doctor_qualifications, doctor_registration_number, 
       notes, follow_up_date
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)
   `;
 
   const values = [
-    patient_id, doctor_id, hospital_id || null, prescription_date, patient_name,
-    patient_age, patient_gender, patient_contact, bp_reading, pulse_rate,
-    weight, spo2, diagnosis, system_examination, patient_complaints,
-    referring_doctor, prescribing_doctor_name, doctor_qualifications, doctor_registration_number,
-    notes, follow_up_date
+    patient_id,
+    doctor_id,
+    hospital_id || null,
+    prescription_date,
+    patient_name,
+    patient_age,
+    patient_gender,
+    patient_contact,
+    bp_reading,
+    pulse_rate,
+    weight,
+    spo2,
+    diagnosis,
+    system_examination,
+    patient_complaints,
+    referring_doctor,
+    prescribing_doctor_name,
+    doctor_qualifications,
+    doctor_registration_number,
+    notes,
+    follow_up_date,
   ];
 
   connection.query(query, values, (err, results) => {
@@ -87,7 +103,6 @@ router.post("/", (req, res) => {
     }
   });
 });
-
 
 // 📌 Update an existing prescription
 router.put("/update", (req, res) => {
@@ -127,11 +142,27 @@ router.put("/update", (req, res) => {
   `;
 
   const values = [
-    patient_id, doctor_id, hospital_id || null, prescription_date, patient_name,
-    patient_age, patient_gender, patient_contact, bp_reading, pulse_rate,
-    weight, spo2, diagnosis, system_examination, patient_complaints,
-    prescribing_doctor_name, doctor_qualifications, doctor_registration_number,
-    notes, follow_up_date, prescription_id
+    patient_id,
+    doctor_id,
+    hospital_id || null,
+    prescription_date,
+    patient_name,
+    patient_age,
+    patient_gender,
+    patient_contact,
+    bp_reading,
+    pulse_rate,
+    weight,
+    spo2,
+    diagnosis,
+    system_examination,
+    patient_complaints,
+    prescribing_doctor_name,
+    doctor_qualifications,
+    doctor_registration_number,
+    notes,
+    follow_up_date,
+    prescription_id,
   ];
 
   connection.query(query, values, (err, results) => {
