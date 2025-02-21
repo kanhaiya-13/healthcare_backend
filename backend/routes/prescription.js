@@ -34,10 +34,10 @@ router.get("/get", (req, res) => {
 
 // 📌 Create a new prescription
 router.post("/", (req, res) => {
+  const hospital_id = req.session.user.hospital_id;
   const {
     patient_id,
     doctor_id,
-    hospital_id,
     prescription_date,
     patient_name,
     patient_age,

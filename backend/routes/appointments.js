@@ -22,11 +22,11 @@ app.use((req, res, next) => {
 
 // CREATE - Add a new appointment
 router.post("/create", async (req, res) => {
+  const hospital_id = req.session.user.hospital_id;
+  const doctor_id = req.session.user.doctor_id;
   try {
     const {
       patient_id,
-      hospital_id,
-      doctor_id,
       receptionist_id,
       appointment_date,
       appointment_time,
@@ -43,7 +43,7 @@ router.post("/create", async (req, res) => {
       patient_id,
       hospital_id,
       doctor_id,
-      receptionist_id,
+      1,
       appointment_date,
       appointment_time,
       status,
