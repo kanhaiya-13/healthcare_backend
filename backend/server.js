@@ -24,7 +24,8 @@ const clinicStats = require("./routes/stats");
 const app = express();
 app.use(
   cors({
-    origin: "http://localhost:5500", // Frontend origin
+    // , // Frontend origin
+    origin: ["https://healthcareonline.netlify.app", "http://localhost:5500"],
     credentials: true, // Enable cookies and sessions
   })
 );
@@ -40,7 +41,7 @@ app.use(
     store: sessionStore,
     resave: false,
     saveUninitialized: false,
-    cookie: { Secure: false, httpOnly: true, sameSite: "Lax" },
+    cookie: { Secure: false, sameSite: "Lax" }, //httpOnly: true,
   })
 );
 

@@ -3,15 +3,15 @@ const router = express.Router();
 const connection = require("../db");
 
 // 📌 Get all prescriptions
-// router.get("/", (req, res) => {
-//   connection.query("SELECT * FROM Prescriptions", (err, results) => {
-//     if (err) {
-//       res.status(500).json({ error: err.message });
-//     } else {
-//       res.status(200).json(results);
-//     }
-//   });
-// });
+router.get("/", (req, res) => {
+  connection.query("SELECT * FROM Prescriptions", (err, results) => {
+    if (err) {
+      res.status(500).json({ error: err.message });
+    } else {
+      res.status(200).json(results);
+    }
+  });
+});
 
 // 📌 Get a specific prescription by ID
 router.get("/get", (req, res) => {
