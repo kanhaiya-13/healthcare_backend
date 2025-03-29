@@ -298,9 +298,9 @@ router.post("/login", async (req, res) => {
             // Determine the redirect URL based on user role
             let redirectUrl = "";
             if (user.role === "doctor") {
-              redirectUrl = "html/doctor/dashBoard.html"; // Doctor dashboard
+              redirectUrl = "/frontend/html/doctor/dashBoard.html"; // Doctor dashboard
             } else if (user.role === "patient") {
-              redirectUrl = "html/patient/dashBoard.html"; // Patient dashboard
+              redirectUrl = "/frontend/html/patient/dashBoard.html"; // Patient dashboard
             } else {
               return res.status(403).json({ message: "Unauthorized Role" });
             }
